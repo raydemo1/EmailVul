@@ -1,0 +1,143 @@
+Received: from mx3.sx69.journey-mail.com (mx3.sx69.journey-mail.com [118.192.69.3])
+	by newxmmxszc35-0.qq.com (NewMX) with SMTP id 49286299
+	for <439824791@qq.com>; Fri, 05 Dec 2025 14:18:18 +0800
+X-QQ-mid: xmmxzc35-0t1764915498t9bmgeef4
+X-QQ-XMAILINFO: MAMQHvHsUTUeB5P3uSwZso7vsSo8T6hFWRkS4k8bIHkNu6o+IKERj7sGPQyLap
+	 9Gg9umCmx1BxKv8hFQinkZdOFGsC31Zl9UQvX/jwF+cT6GRnvfnxPpX3enysbHnA08arJn4tJikV
+	 jYDc9JeCVP7nSnN1scVtZRLO8qabhZ0fL7l6nLM4/3spzEQhPOd6ZvwsSxtV6CWW+Vsw814zm6U+
+	 P1knMZpSmqQBJf2Zxg80Mvfb0HY1/SxZ87XJWUczVIV8056cDX1A9+BrR/U/kI7lKpGSJoVYyyeW
+	 bbtwcPxwY5cYHbOMUSbwDG2HUwNsReA6MJQwXO0UnYLNHlnmlSmquLnVQ0IPCArj31w82tpUzfdH
+	 rl/86ILXjGUgogkrWo7HudiHehQymSPPP4zYkHx01VAATAQJ4MqzObM+m0y3pKcL2m89V2Hpbxqj
+	 P+GD7xa8gVtqAxLmriVncf01lYq8kkELQFmnMhn1K0DA6VN6uutx2PxxCBXYwsl+VqdtTzduOHhg
+	 xIqQVHVRyfpV+wwUgF1JphhfrCqx2Qwe/by87kHzrW4WwFxhGYOdMk45HVOtKbayKL9DgeM7o2WZ
+	 alC/I1eOv+lwtiRcTKjEyGF9ns/cQ9Vp9Jid69VzBKV2xuhh0I7y0+wuhvwkFNJWQn4YFt7AHD7X
+	 TdBWP0jamhnVDTmFcxVsHbywb0h1QcQ0i5rZ50Y83Aqnzzrr5vMhDdKcY+RCJmPAWfuXeBUzqOK+
+	 9bNiY1f+DZ0ysJOv04gWU261HT5Zd0g0uHBGTltt8B56+T34r0W/qCXwYzkfCnk044vpgZTwk9Sm
+	 qWlfoYKUpsx/gl+Jp4Y57Mx8USJp2bMS8xTb4o6WAvLj1YkyQMGl/DDsE4y73a6ZKtyoIlD4eS8j
+	 d4dB67Ep93pTbmsTxfT9gMXi0dU+PTFJxa700bDe04BXgUIWGMfIysZy5nj5Nk32RvUdWbty+YXd
+	 /VLhn3alOkJ9TZD9rNyKcAl+flQU4ZfrwN9K/Q746YpkaencPoHbKkRdFSwq8+utL5Tlbjwpg7Sr
+	 tyo33CNv6IY/JrbubxnpJsk/yY6WZsEgX7Q/x6VEjAWQLUxzbMxCjaqA70Ofl60wS9i1ZJst9qEN
+	 KsD3q7RsBHFIh4drEk2stf3NjrLi5KBz7RQeDk4Mk7EuEML9mByDwo2CaQnUt0W1nHWGCRvnzHw/
+	 zzkrN7kegEuY3mGHTYYuUCHIBQhPMbKN95nXt9hAHzJ5dkfeowCN43KyJqFand5feUX44IJ89/MQ
+	 sLl3S8eHQikCPqsERmf++4bnzkukijiDJT+PDTFBSg8rsDW4/uWwPFp5mAfs2p27IomkFmpCAYNH
+	 uDOxV7yKZ9j2O7nNZcRVOiT2PFrhQ+5dCgV5Qc0b4J8Bw0p2hYnk60kCsrjjX1/JghYHm5KSCwF9
+	 OXKyFKaUmDbwHZKvrMy2C/9Mjm+JB6C+CBt7r6VLvLJ292am0BJy3vfSWOr6APOkG5jOOVvEke6b
+	 Neoeif2Q2tOT97+bmEmq0+AuXpGcUrHyAkD3a00yL3ifbqo8yULI8=
+X-QQ-XMRINFO: NI4Ajvh11aEj8Xl/2s1/T8w=
+Authentication-Results: mx.qq.com; spf=pass(118.192.69.3) smtp.mailfrom=<norep
+	 ly@mail.wnsse.com>; dkim=pass(signature was verified) header.d=mail.wnsse.co
+	 m; dmarc=none(permerror) header.from=mail.wnsse.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mail.wnsse.com;
+	s=easeye2007; t=1764915497;
+	bh=iXqYaPyuL9l//i6tkRYZP2KtypYDTNWJD+YLONVe+qk=;
+	h=Date:From:To:Subject:Feedback-ID;
+	b=hmeLoHKWBRjBmAwKDOV5JVasSQ2HZ5xEHyuno9LAbvef/gHnxeg8Ox1zwjTnPOPAX
+	 8AaeXrUWPAG8eGnZdAJfF4kvV1BbKmhx84lsu0M/LAn0muCai8LJJVrF4ScIpvZ7I0
+	 RHibZN7fP9suEuSCWDrXaxqRWZ6fUYx2rj5Q87Fk=
+DKIM-Filter: OpenDKIM Filter v2.11.0 mx3.sx69.journey-mail.com DA20DA40374
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; d=mail.wnsse.com; 
+	s=easeye2007; t=1764915497; bh=KrhmQWZ1b48qg3j+v1T2nR2Hefw=; 
+	h=Date:From:To:Subject:Feedback-ID; 
+	b=Bd/sp8SfQdFCDKNL56cmYqRk8oqeF1qa88DbVcFkdG/BvkwJ8SzNHoVvcxWIEHAZ3 
+	 /91utfb+bCaD0dK+tBwQwsen88ZAZEDPyFF66CPzy02jv7n/ZOstvfrka2xOJ74hE6 
+	 9BqKEi1Mf1kbvOgxBDjWxyv35kQvwpi8fZygC3wE=
+Received: from localhost
+Date: Fri, 5 Dec 2025 14:13:51 +0800 (CST)
+From: noreply@mail.wnsse.com
+To: 439824791@qq.com
+Message-ID: <1831032424.5583381.1764915231130@server-13>
+Subject: =?UTF-8?B?5Zub5bed5aSn5a2mMjAyNeWxiuavleS4mueUn+iwg+afpemXruWNtw==?=
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+X-Calendar-Config: eyJ2aXNpYmlsaXR5IjoiUHVibGljIn0=
+X-Easeye-ExpirationDate: 2025-12-12 14:18:17
+X-EASEYEUID: N152-GI2TMMZQ-GI2TCMRQGUYTIMJTGUYTQOJTGA3TCMQ-JY-63311C72
+List-Unsubscribe:
+ <https://link-25630.ymailcampaign.com/u/unsub1/N152-GI2TMMZQ-GI2TCMRQGUYTIMJTGUYTQOJTGA3TCMQ-JY-63311C72/V3-B95434C580C02909F583A5D9BEEA3DF6A1D7B4E5?lang=1>,<mailto:unsub-N152-GI2TMMZQ-GI2TCMRQGUYTIMJTGUYTQOJTGA3TCMQ-JY-63311C72@unsub.email-deliver.com?subject=unsubscribe>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+Feedback-ID: noreply@mail.wnsse.com:20251205:5:25630
+
+<html>
+ <head></head>
+ <body>
+  <table border=3D"0" cellpadding=3D"0" cells=
+pacing=3D"0" width=3D"100%"> 
+   <tbody> 
+    <tr> 
+     <td align=3D"cente=
+r" height=3D"44" style=3D"border-bottom:1px solid #f1f1f1;"> 
+      <table =
+align=3D"right" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"1=
+60"> 
+       <tbody> 
+        <tr> 
+         <td> <a href=3D"https://link-2=
+5630=2Eymailcampaign=2Ecom/u/spam1/N152-GI2TMMZQ-GI2TCMRQGUYTIMJTGUYTQOJTGA=
+3TCMQ-JY-63311C72/V3-B95434C580C02909F583A5D9BEEA3DF6A1D7B4E5?lang=3D1" tar=
+get=3D"_blank"><img border=3D"0" height=3D"44" src=3D"https://service=2Ecam=
+paigndelivery=2Ecn/template/images/Images/ReportSpam_1=2Ejpg" /></a></td> 
+=
+         <td> <a href=3D"https://link-25630=2Eymailcampaign=2Ecom/u/unsub1/=
+N152-GI2TMMZQ-GI2TCMRQGUYTIMJTGUYTQOJTGA3TCMQ-JY-63311C72/V3-B95434C580C029=
+09F583A5D9BEEA3DF6A1D7B4E5?lang=3D1" target=3D"_blank"><img border=3D"0" he=
+ight=3D"44" src=3D"https://service=2Ecampaigndelivery=2Ecn/template/images/=
+Images/Unsubscribe_1=2Ejpg" /></a></td> 
+        </tr> 
+       </tbody> 
+  =
+    </table> </td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p></p>
+  <p styl=
+e=3D"margin-left:0px;line-height:24px"><span style=3D"font-size: 16px;font-=
+family:=E5=AE=8B=E4=BD=93">=E4=BA=B2=E7=88=B1=E7=9A=84=E5=90=8C=E5=AD=A6=EF=
+=BC=9A</span></p>
+  <p style=3D"text-indent:32px;line-height:24px"><span st=
+yle=3D"font-size:16px;font-family:=E5=AE=8B=E4=BD=93">=E6=82=A8=E5=A5=BD=EF=
+=BC=81=E9=A6=96=E5=85=88=EF=BC=8C=E8=AF=B7=E6=8E=A5=E5=8F=97=E6=AF=8D=E6=A0=
+=A1=E7=9A=84=E8=AF=9A=E6=8C=9A=E9=97=AE=E5=80=99=E5=92=8C=E7=9C=9F=E5=88=87=
+=E7=A5=9D=E7=A6=8F=EF=BC=81=E6=82=A8=E5=9C=A8=E5=9B=9B=E5=B7=9D=E5=A4=A7=E5=
+=AD=A6=E5=BA=A6=E8=BF=87=E4=BA=86=E5=AE=9D=E8=B4=B5=E7=9A=84=E9=9D=92=E6=98=
+=A5=E6=97=B6=E5=85=89=EF=BC=8C=E5=B7=B2=E7=99=BB=E4=B8=8A=E4=BA=BA=E7=94=9F=
+=E7=9A=84=E6=96=B0=E8=88=9E=E5=8F=B0=EF=BC=8C=E6=AF=8D=E6=A0=A1=E5=B0=86=E4=
+=B8=80=E5=A6=82=E6=97=A2=E5=BE=80=E5=9C=B0=E5=85=B3=E6=B3=A8=E6=82=A8=E7=9A=
+=84=E6=88=90=E9=95=BF=E3=80=82=E4=B8=BA=E4=BA=86=E8=A7=A3=E6=82=A8=E7=9B=AE=
+=E5=89=8D=E7=9A=84=E5=B0=B1=E4=B8=9A=E7=8E=B0=E7=8A=B6=E4=BB=A5=E5=8F=8A=E6=
+=82=A8=E5=AF=B9=E5=AD=A6=E6=A0=A1=E4=BA=BA=E6=89=8D=E5=9F=B9=E5=85=BB=E3=80=
+=81=E7=AE=A1=E7=90=86=E6=9C=8D=E5=8A=A1=E7=9A=84=E8=AF=84=E4=BB=B7=E5=8F=8A=
+=E5=8F=8D=E9=A6=88=E6=84=8F=E8=A7=81=EF=BC=8C=E6=88=91=E4=BB=AC=E8=AE=BE=E8=
+=AE=A1=E4=BA=86=E8=BF=99=E4=BB=BD=E9=97=AE=E5=8D=B7=E3=80=82</span><span st=
+yle=3D"font-size:16px;font-family:=E5=AE=8B=E4=BD=93">=E5=B8=8C=E6=9C=9B=E9=
+=80=9A=E8=BF=87</span><span style=3D"font-size:16px;font-family:=E5=AE=8B=
+=E4=BD=93">=E6=82=A8</span><span style=3D"font-size:16px;font-family:=E5=AE=
+=8B=E4=BD=93">=E7=9A=84=E6=84=8F=E8=A7=81=E5=8F=8D=E9=A6=88=EF=BC=8C=E6=9B=
+=B4=E5=A5=BD=E5=9C=B0=E4=BC=98=E5=8C=96=E5=AD=A6=E6=A0=A1=E5=B0=B1=E4=B8=9A=
+=E6=9C=8D=E5=8A=A1=E3=80=81=E4=BA=BA=E6=89=8D=E5=9F=B9=E5=85=BB=E7=AD=89=E5=
+=B7=A5=E4=BD=9C=E3=80=82=E9=97=AE=E5=8D=B7=E4=BB=85=E4=BD=9C=E5=AD=A6=E6=A0=
+=A1=E5=88=86=E6=9E=90=E7=A0=94=E7=A9=B6=E4=B9=8B=E7=94=A8=EF=BC=8C=E6=88=91=
+=E4=BB=AC=E6=89=BF=E8=AF=BA=EF=BC=8C=E4=BC=9A=E5=AF=B9</span><span style=3D=
+"font-size:16px;font-family:=E5=AE=8B=E4=BD=93">=E6=82=A8</span><span style=
+=3D"font-size:16px;font-family:=E5=AE=8B=E4=BD=93">=E6=8F=90=E4=BE=9B=E7=9A=
+=84=E4=B8=80=E5=88=87=E4=BF=A1=E6=81=AF=E4=BF=9D=E5=AF=86=EF=BC=8C=E8=AF=B7=
+</span><span style=3D"font-size:16px;font-family:=E5=AE=8B=E4=BD=93">=E6=82=
+=A8</span><span style=3D"font-size:16px;font-family:=E5=AE=8B=E4=BD=93">=E6=
+=8D=AE=E5=AE=9E=E5=A1=AB=E5=86=99=EF=BC=8C=E6=94=BE=E5=BF=83=E4=BD=9C=E7=AD=
+=94=E3=80=82</span></p>
+  <p style=3D"text-indent:32px;line-height:24px"><s=
+pan style=3D"font-size:16px;font-family:=E5=AE=8B=E4=BD=93">=E9=9D=9E=E5=B8=
+=B8=E6=84=9F=E8=B0=A2=E6=82=A8=E7=9A=84=E6=94=AF=E6=8C=81=E4=B8=8E=E5=90=88=
+=E4=BD=9C=EF=BC=81</span></p>
+  <p style=3D"text-indent:32px;line-height:24=
+px"><span style=3D"font-family:=E5=AE=8B=E4=BD=93">=E8=AF=B7=E7=82=B9=E5=87=
+=BB=E9=93=BE=E6=8E=A5=E4=BD=9C=E7=AD=94=EF=BC=9Awnsse=2Ecom/d/1fvVKtzwgaa</=
+span></p>
+  <p style=3D"margin-left:32px;text-align:right;line-height:24px"=
+><span style=3D"font-size:16px;font-family: =E5=AE=8B=E4=BD=93">=E5=9B=9B=
+=E5=B7=9D=E5=A4=A7=E5=AD=A6=E5=B0=B1=E4=B8=9A=E6=8C=87=E5=AF=BC=E4=B8=AD=E5=
+=BF=83</span></p>
+  <p><br /></p> 
+ </body>
+</html>

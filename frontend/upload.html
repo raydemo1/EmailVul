@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>上传检测</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --el-card-border-radius: 14px; }
+    html.dark { --el-card-border-color: #1f2937; }
+  </style>
+</head>
+<body>
+  <div id="app" class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <header class="sticky top-0 z-30 h-14 px-6 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+      <div class="flex items-center gap-3">
+        <el-icon class="text-brand"><Upload /></el-icon>
+        <span class="font-semibold">上传检测</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="./index.html" class="text-sm text-brand">返回 Dashboard</a>
+        <div class="flex items-center gap-2">
+          <el-icon class="text-yellow-500"><Sunny /></el-icon>
+          <el-switch v-model="darkMode" active-text="暗色" inactive-text="浅色"></el-switch>
+          <el-icon class="text-sky-500"><Moon /></el-icon>
+        </div>
+      </div>
+    </header>
+
+    <main class="p-6">
+      <div class="max-w-5xl mx-auto">
+        <el-card shadow="always" class="rounded-xl">
+          <template #header>
+            <div class="flex items-center gap-2">
+              <el-icon class="text-brand"><ChatDotSquare /></el-icon>
+              <span>文本输入与文件上传</span>
+            </div>
+          </template>
+
+          <div class="space-y-4">
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/60">
+              <div class="p-3 flex items-center gap-2">
+                <el-icon class="text-slate-500"><Edit /></el-icon>
+                <span class="text-sm text-slate-600">请输入或粘贴待检测内容（支持邮件正文）</span>
+                <div class="ml-auto flex items-center gap-2">
+                  <el-button size="small" @click="formatText">格式化</el-button>
+                  <el-button size="small" @click="clearText" type="info">清空</el-button>
+                </div>
+              </div>
+              <div class="px-3 pb-3">
+                <el-input v-model="textInput" type="textarea" :autosize="{minRows:6, maxRows:12}" placeholder="在此输入或粘贴，需要检测的文本内容..." />
+              </div>
+              <div class="px-3 pb-3 flex flex-wrap items-center gap-3">
+                <el-select v-model="model" placeholder="选择模型" style="width:220px;">
+                  <el-option label="GPT-4" value="gpt4"></el-option>
+                  <el-option label="Gemini 2.5 Flash" value="gemini"></el-option>
+                  <el-option label="GLM 4.6" value="glm46"></el-option>
+                  <el-option label="自定义(OpenAI兼容)" value="openai"></el-option>
+                </el-select>
+                <el-switch v-model="customEnabled" active-text="自定义模型与密钥"></el-switch>
+                <el-input v-if="customEnabled" v-model="customModel" placeholder="模型名称(可选)" style="width:220px;"></el-input>
+                <el-input v-if="customEnabled" v-model="customKey" placeholder="API Key(可选)" style="width:280px;" show-password></el-input>
+                <el-input v-if="customEnabled && model==='openai'" v-model="customBaseUrl" placeholder="Base URL(例如 https://api.openai.com)" style="width:300px;"></el-input>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/60 p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <el-icon class="text-slate-500"><Folder /></el-icon>
+                <span class="font-medium">文件上传（支持 .eml/.msg/.txt）</span>
+              </div>
+              <el-upload multiple :auto-upload="false" :on-change="handleChange" :limit="20" :on-exceed="onExceed" :file-list="fileList" accept=".eml,.msg,.txt">
+                <el-button type="primary">选择文件</el-button>
+                <div class="el-upload__tip">支持 .eml/.msg/.txt，单文件 ≤10MB</div>
+              </el-upload>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <el-button type="success" @click="submitAll" :loading="uploading">提交检测</el-button>
+              <div class="text-sm text-slate-500">文本与文件将并行处理，结果可在“检测报告”查看</div>
+            </div>
+
+            <div v-if="progress.total" class="mt-2">
+              <el-progress :text-inside="true" :stroke-width="18" :percentage="Math.floor(progress.done*100/progress.total)"></el-progress>
+            </div>
+            <el-alert v-if="error" type="error" :title="error" show-icon class="mt-2"/>
+            <el-alert v-if="successMsg" type="success" :title="successMsg" show-icon class="mt-2"/>
+          </div>
+        </el-card>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+  <script>
+    const { createApp, ref, reactive, watch } = Vue
+    const app = createApp({
+      setup() {
+        const darkMode = ref(false)
+        const fileList = ref([])
+        const uploading = ref(false)
+        const progress = reactive({ total: 0, done: 0 })
+        const error = ref('')
+        const successMsg = ref('')
+        const textInput = ref('')
+        const model = ref('gpt4')
+        const customEnabled = ref(false)
+        const customModel = ref('')
+        const customKey = ref('')
+        const customBaseUrl = ref('')
+
+        const handleChange = (file, files) => { fileList.value = files; error.value = '' }
+        const onExceed = () => { error.value = '超过批量上限' }
+
+        const clearText = () => { textInput.value = '' }
+        const formatText = () => {
+          let s = textInput.value || ''
+          s = s.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi,'')
+               .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi,'')
+               .replace(/<[^>]+>/g,'')
+               .replace(/\u200B|\u200C|\u200D|\uFEFF/g,'')
+               .replace(/\s+\n/g,'\n')
+          textInput.value = s.trim()
+        }
+
+        const buildHeaders = () => {
+          const headers = {}
+          if (customEnabled.value) {
+            if (customModel.value) headers['X-LLM-Model'] = customModel.value
+            if (customKey.value) headers['X-LLM-API-Key'] = customKey.value
+            if (model.value === 'openai') {
+              headers['X-LLM-Provider'] = 'openai'
+              if (customBaseUrl.value) headers['X-LLM-Base-URL'] = customBaseUrl.value
+            }
+          }
+          return headers
+        }
+
+        const submitAll = async () => {
+          error.value = ''; successMsg.value = ''
+          if (!fileList.value.length && !(textInput.value||'').trim()) { error.value = '请输入文本或选择文件'; return }
+          // 安全验证：文本长度上限 1MB
+          if ((textInput.value||'').length > 1024*1024) { error.value = '文本过长，限制为 1MB'; return }
+          const form = new FormData()
+          for (const f of fileList.value) form.append('files', f.raw)
+          if ((textInput.value||'').trim()) {
+            const blob = new Blob([textInput.value], { type: 'text/plain' })
+            form.append('files', blob, 'input.txt')
+          }
+          uploading.value = true
+          progress.total = fileList.value.length + ((textInput.value||'').trim()?1:0)
+          progress.done = 0
+          try {
+            const headers = buildHeaders()
+            const res = await fetch('/api/emails/upload?model=' + encodeURIComponent(model.value), { method: 'POST', body: form, headers })
+            if (!res.ok) {
+              let msg = '上传失败'
+              try { const err = await res.json(); msg = err.message || err.error || msg } catch {}
+              throw new Error(msg)
+            }
+            const data = await res.json()
+            const ids = data.report_ids || []
+            progress.done = progress.total
+            // 将报告ID追加到本地历史
+            try {
+              const key = 'history_report_ids'
+              const prev = JSON.parse(localStorage.getItem(key)||'[]')
+              const next = Array.from(new Set([...(prev||[]), ...ids]))
+              localStorage.setItem(key, JSON.stringify(next))
+            } catch {}
+            successMsg.value = '已提交检测，可前往“检测报告”查看结果'
+          } catch (e) {
+            error.value = e.message
+          } finally {
+            uploading.value = false
+          }
+        }
+
+        const initDark = () => { const saved = localStorage.getItem('dark') === '1'; darkMode.value = saved; document.documentElement.classList.toggle('dark', darkMode.value) }
+        watch(darkMode, (v) => { document.documentElement.classList.toggle('dark', v); localStorage.setItem('dark', v ? '1' : '0') })
+        initDark()
+
+        return { darkMode, fileList, uploading, progress, error, successMsg, textInput, model, customEnabled, customModel, customKey, customBaseUrl, handleChange, onExceed, clearText, formatText, submitAll }
+      }
+    })
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) { app.component(key, component) }
+    app.use(ElementPlus).mount('#app')
+  </script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>安全态势总览</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --el-card-border-radius: 8px; }
+    html.dark { --el-card-border-color: #1f2937; }
+    .breath { animation: breath 2s ease-in-out infinite; }
+    @keyframes breath { 0% { transform: scale(1); opacity: 1 } 50% { transform: scale(1.1); opacity: .85 } 100% { transform: scale(1); opacity: 1 } }
+    .pulse { animation: pulse 300ms ease-out 1; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,82,82,.6) } 100% { box-shadow: 0 0 0 12px rgba(255,82,82,0) } }
+    .elev4 { box-shadow: 0 8px 24px rgba(2,6,23,0.12); }
+    .badge { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; font-weight:600 }
+    .row-enter { animation: slideIn 300ms ease-out 1; }
+    @keyframes slideIn { from { transform: translateY(8px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+    .sprite { width:18px; height:18px; fill: currentColor }
+  </style>
+</head>
+<body>
+  <div id="app" class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <header class="sticky top-0 z-30 h-14 px-6 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+      <div class="flex items-center gap-3">
+        <el-icon class="text-brand"><DataAnalysis /></el-icon>
+        <span class="font-semibold">安全态势总览</span>
+      </div>
+      <nav class="flex items-center gap-3">
+        <a href="./upload.html" class="text-sm text-brand">上传检测</a>
+        <a href="./reports.html" class="text-sm text-brand">检测报告</a>
+        <a href="./settings.html" class="text-sm text-brand">设置</a>
+        <div class="flex items-center gap-2">
+          <el-icon class="text-yellow-500"><Sunny /></el-icon>
+          <el-switch v-model="darkMode" active-text="暗色" inactive-text="浅色" aria-label="主题切换"></el-switch>
+          <el-icon class="text-sky-500"><Moon /></el-icon>
+        </div>
+      </nav>
+    </header>
+
+    <main class="p-6 space-y-6">
+      <section aria-label="核心指标" class="grid grid-cols-12 gap-4">
+        <div class="col-span-12 md:col-span-3">
+          <div class="h-[120px] rounded-lg elev4 bg-white dark:bg-slate-900 p-4 flex flex-col justify-between" role="region" aria-label="今日总处理量">
+            <div class="text-xs text-slate-500">今日总处理量</div>
+            <div class="text-2xl font-bold" aria-live="polite">{{ kpis.todayCount }}</div>
+            <div class="text-xs"><span :class="kpis.trend>=0 ? 'text-green-600' : 'text-red-600'">{{ kpis.trend>=0 ? '↑' : '↓' }} {{ Math.abs(kpis.trend).toFixed(2) }}%</span> · 每分钟更新</div>
+          </div>
+        </div>
+        <div class="col-span-12 md:col-span-3">
+          <div :class="['h-[120px] rounded-lg elev4 bg-white dark:bg-slate-900 p-4 flex flex-col justify-between', kpis.interceptPulse ? 'pulse' : '']" role="region" aria-label="高风险拦截">
+            <div class="text-xs text-slate-500">高风险拦截</div>
+            <div class="text-2xl font-bold text-[#FF5252]">{{ kpis.intercept }}</div>
+            <div class="text-xs">拦截率：{{ kpis.interceptRate.toFixed(2) }}%</div>
+          </div>
+        </div>
+        <div class="col-span-12 md:col-span-3">
+          <div class="h-[120px] rounded-lg elev4 bg-white dark:bg-slate-900 p-4" role="region" aria-label="平均风险指数">
+            <div id="avgGauge" class="w-full h-[80px]"></div>
+            <div class="text-sm">{{ kpis.avgLabel }}</div>
+          </div>
+        </div>
+        <div class="col-span-12 md:col-span-3">
+          <div class="h-[120px] rounded-lg elev4 bg-white dark:bg-slate-900 p-4 flex flex-col justify-between" role="region" aria-label="AI引擎状态">
+            <div class="flex items-center gap-2">
+              <span :class="['w-3 h-3 rounded-full breath', engine.online ? 'bg-[#8BC34A]' : 'bg-[#FF5722]']" aria-hidden="true"></span>
+              <span class="text-xs text-slate-500">AI引擎 {{ engine.online? 'Online' : 'Offline' }}</span>
+            </div>
+            <div>
+              <span :class="latencyClass" class="text-lg font-semibold">{{ engine.latency }}ms</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-label="可视化态势" class="grid grid-cols-12 gap-4">
+        <div class="col-span-12 xl:col-span-8">
+          <div class="rounded-lg elev4 bg-white dark:bg-slate-900 p-4 h-[400px]" role="region" aria-label="实时流量与风险趋势">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm font-medium">实时流量与风险趋势</div>
+              <el-radio-group v-model="range" size="small" aria-label="时间选择">
+                <el-radio-button label="1h">1h</el-radio-button>
+                <el-radio-button label="24h">24h</el-radio-button>
+                <el-radio-button label="7d">7d</el-radio-button>
+              </el-radio-group>
+            </div>
+            <div id="trendChart" class="w-full h-[340px]" @dblclick="resetTrend" aria-label="趋势图"></div>
+          </div>
+        </div>
+        <div class="col-span-12 xl:col-span-4">
+          <div class="rounded-lg elev4 bg-white dark:bg-slate-900 p-4 h-[400px]" role="region" aria-label="攻击类型雷达">
+            <div class="text-sm font-medium mb-2">攻击类型雷达图</div>
+            <div id="radarChart" class="w-full h-[340px] animate-[spin_30s_linear_infinite]" aria-label="雷达图"></div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-label="实时监测流" class="rounded-lg elev4 bg-white dark:bg-slate-900 p-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm font-medium">实时监测流</div>
+          <div class="text-xs text-slate-500">最近100条缓存 · 显示10条最新</div>
+        </div>
+        <el-table :data="events.slice(-10).reverse()" height="600" row-class-name="row-enter" size="small" role="table" aria-label="实时事件表">
+          <el-table-column label="时间" width="120">
+            <template #default="{row}"><span :title="row.iso">{{ row.time }}</span></template>
+          </el-table-column>
+          <el-table-column label="来源" width="160">
+            <template #default="{row}">{{ maskIP(row.src) }}</template>
+          </el-table-column>
+          <el-table-column label="类型" width="120">
+            <template #default="{row}"><svg class="sprite"><use :href="'#icon-'+(row.type||'other')"></use></svg> <span class="ml-1">{{ row.type }}</span></template>
+          </el-table-column>
+          <el-table-column label="摘要">
+            <template #default="{row}"><span v-html="formatSummary(row.summary)"></span></template>
+          </el-table-column>
+          <el-table-column label="风险分" width="100">
+            <template #default="{row}"><span :class="badgeClass(row.risk)" class="badge">{{ row.risk }}</span></template>
+          </el-table-column>
+          <el-table-column label="操作" width="140">
+            <template #default="{row}"><el-button type="primary" plain>查看</el-button></template>
+          </el-table-column>
+        </el-table>
+        <svg style="display:none">
+          <symbol id="icon-phish" viewBox="0 0 24 24"><path d="M12 2l4 4-4 4-4-4 4-4zm0 8l8 8-2 2-6-6-6 6-2-2 8-8z"/></symbol>
+          <symbol id="icon-link" viewBox="0 0 24 24"><path d="M3.9 12a5 5 0 0 1 5-5h3v2h-3a3 3 0 1 0 0 6h3v2h-3a5 5 0 0 1-5-5zm11.1-5h-3v2h3a3 3 0 1 1 0 6h-3v2h3a5 5 0 0 0 0-10z"/></symbol>
+          <symbol id="icon-attach" viewBox="0 0 24 24"><path d="M7 7v8a5 5 0 0 0 10 0V7h-2v8a3 3 0 1 1-6 0V7H7z"/></symbol>
+          <symbol id="icon-other" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></symbol>
+        </svg>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+  <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
+  <script>
+    const { createApp, ref, reactive, computed, watch } = Vue
+    const app = createApp({
+      setup() {
+        const darkMode = ref(false)
+        const kpis = reactive({ todayCount: 0, target: 0, trend: 0, intercept: 0, interceptRate: 0, avg: 0, avgLabel: '' })
+        const engine = reactive({ online: true, latency: 0 })
+        const range = ref('24h')
+        const events = reactive([])
+        const wsError = ref('')
+        const loadingTrend = ref(true)
+        const errTrend = ref('')
+        const kpiTimer = ref(0)
+        const kpisIntervalMs = 60000
+
+        const latencyClass = computed(() => engine.latency < 200 ? 'text-green-600' : (engine.latency <= 500 ? 'text-yellow-500' : 'text-red-600'))
+        const badgeClass = (v) => v >= 80 ? 'bg-red-600 text-white' : (v >= 50 ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white')
+
+        const ensureEcharts = () => new Promise((resolve, reject) => { if (window.echarts) { resolve(); return } const s = document.createElement('script'); s.src='https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js'; s.onload=()=>resolve(); s.onerror=()=>reject(); document.head.appendChild(s) })
+
+        const countUp = (start, end, dur, setter) => { const t0 = performance.now(); const step = (now) => { const p = Math.min(1, (now - t0)/dur); const v = Math.floor(start + (end - start)*p); setter(v); if (p < 1) requestAnimationFrame(step) }; requestAnimationFrame(step) }
+
+        const loadKpis = async () => { try { const r = await fetch('/api/stats'); const d = await r.json(); const today = (d.daily||[]).slice(-1)[0]?.count || 0; const totalReq = today || 1; const high = (d.levels?.['高']||0) + (d.levels?.['危急']||0); const rate = Math.min(100, (high*100)/Math.max(1, d.total||totalReq)); const avg = Math.round((d.avg?.risk||0)); const prev = kpis.todayCount; kpis.target = today; countUp(0, today, 1000, (v)=> kpis.todayCount = v); kpis.trend = ((today - prev)/Math.max(1, prev))*100; const oldIntercept = kpis.intercept; kpis.intercept = high; if (kpis.intercept > oldIntercept) { kpis.interceptPulse = true; setTimeout(()=> kpis.interceptPulse = false, 300) } kpis.interceptRate = rate; kpis.avg = avg; kpis.avgLabel = avg <= 30 ? '安全' : (avg <= 70 ? '警戒' : '危险'); await renderAvgGauge() } catch {} }
+
+        const renderAvgGauge = async () => { await ensureEcharts(); const el = document.getElementById('avgGauge'); if (!el) return; const chart = echarts.init(el); chart.setOption({ series: [{ type:'gauge', startAngle: 180, endAngle: 0, min:0, max:100, axisLine:{ lineStyle:{ width:10 } }, pointer:{ show:false }, progress:{ show:true, roundCap:true, width:10 }, axisTick:{ show:false }, splitLine:{ show:false }, axisLabel:{ show:false }, detail:{ valueAnimation:true, formatter:'{value}', fontSize:20 }, data:[{ value: kpis.avg }] }] }) }
+
+        const renderTrend = async () => { loadingTrend.value = true; errTrend.value = ''; try { await ensureEcharts(); const el = document.getElementById('trendChart'); if (!el) return; const chart = echarts.init(el); const r = await fetch('/api/stats'); const d = await r.json(); const xs = (d.daily||[]).map(x=>x.date); const reqs = (d.daily||[]).map(x=>x.count); const risks = (d.daily||[]).map(x=>Math.max(1, Math.round((x.count||1)/10))); chart.setOption({ tooltip: { trigger:'axis', axisPointer: { type:'cross' } }, xAxis: { type:'category', data: xs }, yAxis: [ { type:'value', name:'请求量', position:'left', axisLine:{ lineStyle:{ color:'#2563EB' } } }, { type:'log', name:'风险事件', position:'right', axisLine:{ lineStyle:{ color:'#FF5252' } } } ], dataZoom: [{ type:'inside' }, { }], series: [ { type:'line', name:'请求量', data: reqs, yAxisIndex:0, smooth:true, color:'#2563EB' }, { type:'bar', name:'风险事件', data: risks, yAxisIndex:1, itemStyle:{ color:'#FF5252' } } ] }); chart.getZr().on('dblclick', () => { chart.dispatchAction({ type:'dataZoom', start:0, end:100 }) }) } catch (e) { errTrend.value = '趋势加载失败' } finally { loadingTrend.value = false } }
+
+        const resetTrend = () => { const el = document.getElementById('trendChart'); if (!el) return; const chart = echarts.getInstanceByDom(el); if (chart) chart.dispatchAction({ type:'dataZoom', start:0, end:100 }) }
+
+        const renderRadar = async () => { await ensureEcharts(); const el = document.getElementById('radarChart'); if (!el) return; const chart = echarts.init(el); const dims = ['仿冒品牌','链接钓鱼','附件恶意','凭据窃取','社工诱导','动态']; const vals = [40,30,25,35,32,20]; chart.setOption({ tooltip:{}, radar:{ indicator: dims.map(x=>({ name:x, max:100 })), axisName:{ color:'#64748b', fontSize:12 }, splitArea:{ areaStyle:{ color:['rgba(37,99,235,0.08)','rgba(37,99,235,0.05)'] } } }, series:[{ type:'radar', data:[{ value: vals, name:'威胁强度' }], areaStyle:{ opacity:.3 }, emphasis:{ focus:'self' } }] }); chart.on('click', (p)=> { chart.dispatchAction({ type:'highlight', seriesIndex:0, dataIndex:p.dataIndex||0 }) }) }
+
+        const maskIP = (ip) => { const parts = (ip||'').split('.'); if (parts.length!==4) return ip||''; return `${parts[0]}.***.***.${parts[3]}` }
+        const formatSummary = (s) => { const txt = (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); const cut = txt.length>40 ? txt.slice(0,40)+'…' : txt; const keywords = ['密码','验证码','链接','附件','转账']; let out = cut; for (const k of keywords) out = out.replace(new RegExp(k,'g'), `<span style="background:#F44336;color:#FFFF00;padding:0 2px">${k}</span>`); return out }
+
+        const connectWS = () => { try { const ws = new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host+'/ws/events'); let lastPush = 0; ws.onmessage = (ev) => { const now = Date.now(); if (now - lastPush < 500) return; lastPush = now; try { const obj = JSON.parse(ev.data) } catch { return } try { const obj = JSON.parse(ev.data); events.push({ time: new Date(obj.ts||Date.now()).toLocaleTimeString(), iso: new Date(obj.ts||Date.now()).toISOString(), src: obj.src||'', type: obj.type||'other', summary: obj.summary||'', risk: obj.risk||0 }); if (events.length > 100) events.splice(0, events.length-100); localStorage.setItem('events_cache', JSON.stringify(events)); if ((obj.level||'')==='高' || (obj.level||'')==='危急') { kpis.interceptPulse = true; setTimeout(()=> kpis.interceptPulse=false, 300) } } catch {} }; ws.onerror = () => { wsError.value = 'WebSocket连接失败，切换为轮询'; pollEvents() } } catch { wsError.value = 'WebSocket不可用，切换为轮询'; pollEvents() } }
+        const pollEvents = async () => { try { const r = await fetch('/api/events/latest'); const arr = await r.json(); for (const obj of arr||[]) { events.push({ time: new Date(obj.ts||Date.now()).toLocaleTimeString(), iso: new Date(obj.ts||Date.now()).toISOString(), src: obj.src||'', type: obj.type||'other', summary: obj.summary||'', risk: obj.risk||0 }) } if (events.length>100) events.splice(0, events.length-100); localStorage.setItem('events_cache', JSON.stringify(events)) } catch {} }
+
+        const initDark = () => { const saved = localStorage.getItem('dark') === '1'; darkMode.value = saved; document.documentElement.classList.toggle('dark', darkMode.value) }
+        watch(darkMode, (v) => { document.documentElement.classList.toggle('dark', v); localStorage.setItem('dark', v ? '1' : '0') })
+
+        const boot = async () => { try { const cache = JSON.parse(localStorage.getItem('events_cache')||'[]') || []; cache.forEach(e=>events.push(e)) } catch {}; await renderAvgGauge(); await renderTrend(); await renderRadar(); await loadKpis(); kpiTimer.value = setInterval(loadKpis, kpisIntervalMs); connectWS(); try { const r = await fetch('/api/engine/status'); const d = await r.json(); engine.online = !!d.online } catch {}; try { const r2 = await fetch('/api/engine/latency'); const d2 = await r2.json(); engine.latency = Number(d2.latency)||0 } catch {} }
+        boot(); initDark()
+
+        return { darkMode, kpis, engine, range, events, wsError, maskIP, formatSummary, latencyClass, badgeClass, resetTrend }
+      }
+    })
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) { app.component(key, component) }
+    app.use(ElementPlus).mount('#app')
+  </script>
+</body>
+</html>

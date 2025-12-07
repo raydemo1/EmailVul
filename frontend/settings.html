@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设置中心</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-palenight.css">
+  <style>
+    :root { --el-card-border-radius: 14px; }
+    html.dark { --el-card-border-color: #1f2937; }
+    .sticky-actions { position: sticky; bottom: 0; z-index: 40; }
+  </style>
+</head>
+<body>
+  <div id="app" class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <header class="sticky top-0 z-30 h-14 px-6 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+      <div class="flex items-center gap-3">
+        <el-icon class="text-brand"><Setting /></el-icon>
+        <span class="font-semibold">设置中心</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="./index.html" class="text-sm text-brand">返回 Dashboard</a>
+        <el-button type="primary" @click="openHelp"><el-icon><QuestionFilled /></el-icon> 帮助</el-button>
+        <div class="flex items-center gap-2">
+          <el-icon class="text-yellow-500"><Sunny /></el-icon>
+          <el-switch v-model="darkMode" active-text="暗色" inactive-text="浅色"></el-switch>
+          <el-icon class="text-sky-500"><Moon /></el-icon>
+        </div>
+      </div>
+    </header>
+
+    <main class="p-6 space-y-6">
+      <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-12 xl:col-span-6">
+          <el-card shadow="always" class="rounded-xl">
+            <template #header>
+              <div class="flex items-center gap-2">
+                <el-icon class="text-brand"><Cpu /></el-icon>
+                <span>检测引擎配置</span>
+              </div>
+            </template>
+            <div class="grid grid-cols-12 gap-4">
+              <div class="col-span-12">
+                <div class="flex flex-wrap items-center gap-3">
+                  <el-select v-model="engine.model" placeholder="选择模型" style="width:220px;">
+                    <el-option label="GPT-4" value="gpt4"></el-option>
+                    <el-option label="Claude-3" value="claude3"></el-option>
+                    <el-option label="本地LLaMA" value="llama"></el-option>
+                    <el-option label="BERT" value="bert"></el-option>
+                  </el-select>
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm text-slate-500">温度</span>
+                    <el-slider v-model="engine.temperature" :min="0" :max="1" :step="0.01" style="width:240px;"></el-slider>
+                    <span class="w-12 text-right text-sm">{{ engine.temperature.toFixed(2) }}</span>
+                  </div>
+                  <el-tag type="info">{{ modelDesc }}</el-tag>
+                </div>
+              </div>
+
+              <div class="col-span-12">
+                <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/60 p-4">
+                  <div class="flex items-center gap-2 mb-3">
+                    <el-icon class="text-slate-500"><Document /></el-icon>
+                    <span class="font-medium">关键词与规则库管理</span>
+                  </div>
+                  <el-tabs v-model="listTab">
+                    <el-tab-pane label="黑名单" name="black">
+                      <div class="flex items-center gap-2 mb-2">
+                        <el-select v-model="black.newType" placeholder="类型" style="width:140px;">
+                          <el-option label="关键词" value="keyword"></el-option>
+                          <el-option label="IP地址" value="ip"></el-option>
+                          <el-option label="URL" value="url"></el-option>
+                        </el-select>
+                        <el-input v-model="black.newValue" placeholder="值" style="width:280px;"></el-input>
+                        <el-button type="danger" @click="addItem('black')">添加</el-button>
+                      </div>
+                      <el-table :data="black.items" size="small" class="rounded-xl">
+                        <el-table-column prop="type" label="类型" width="120"></el-table-column>
+                        <el-table-column prop="value" label="值"></el-table-column>
+                        <el-table-column label="操作" width="120">
+                          <template #default="{row, $index}">
+                            <el-button type="danger" text @click="removeItem('black', $index)">删除</el-button>
+                          </template>
+                        </el-table-column>
+                      </el-table>
+                    </el-tab-pane>
+                    <el-tab-pane label="白名单" name="white">
+                      <div class="flex items-center gap-2 mb-2">
+                        <el-select v-model="white.newType" placeholder="类型" style="width:140px;">
+                          <el-option label="关键词" value="keyword"></el-option>
+                          <el-option label="IP地址" value="ip"></el-option>
+                          <el-option label="URL" value="url"></el-option>
+                        </el-select>
+                        <el-input v-model="white.newValue" placeholder="值" style="width:280px;"></el-input>
+                        <el-button type="success" @click="addItem('white')">添加</el-button>
+                      </div>
+                      <el-table :data="white.items" size="small" class="rounded-xl">
+                        <el-table-column prop="type" label="类型" width="120"></el-table-column>
+                        <el-table-column prop="value" label="值"></el-table-column>
+                        <el-table-column label="操作" width="120">
+                          <template #default="{row, $index}">
+                            <el-button type="danger" text @click="removeItem('white', $index)">删除</el-button>
+                          </template>
+                        </el-table-column>
+                      </el-table>
+                    </el-tab-pane>
+                  </el-tabs>
+
+                  <div class="grid grid-cols-12 gap-4 mt-4">
+                    <div class="col-span-12">
+                      <div class="flex items-center gap-2 mb-2">
+                        <el-icon class="text-slate-500"><Edit /></el-icon>
+                        <span class="font-medium">正则表达式编辑器</span>
+                        <el-tooltip effect="dark" content="输入正则表达式，右侧可实时测试" placement="top">
+                          <el-icon class="text-slate-500"><QuestionFilled /></el-icon>
+                        </el-tooltip>
+                      </div>
+                      <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-12 lg:col-span-6">
+                          <div id="regexEditor" class="h-36 rounded-xl overflow-hidden"></div>
+                          <div class="mt-2 flex items-center gap-2">
+                            <el-input v-model="regex.flags" placeholder="标志(如 i,m)" style="width:160px;"></el-input>
+                            <el-button @click="compileRegex">编译</el-button>
+                            <el-tag :type="regex.error ? 'danger' : 'success'">{{ regex.error ? '无效' : '有效' }}</el-tag>
+                          </div>
+                        </div>
+                        <div class="col-span-12 lg:col-span-6">
+                          <el-input v-model="regex.testText" type="textarea" :rows="5" placeholder="测试文本"></el-input>
+                          <div class="mt-2">
+                            <el-button type="primary" @click="runRegexTest">测试</el-button>
+                            <span class="ml-2 text-sm text-slate-500">匹配数：{{ regex.matches.length }}</span>
+                          </div>
+                          <div class="mt-2 text-sm break-words" v-if="regex.matches.length">{{ regex.matches.join(' | ') }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 flex items-center gap-3">
+                    <el-button @click="exportRules" type="info">导出JSON</el-button>
+                    <el-upload :show-file-list="false" :auto-upload="false" :on-change="importRules">
+                      <el-button type="success">导入JSON</el-button>
+                    </el-upload>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-span-12">
+                <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/60 p-4">
+                  <div class="flex items-center gap-2 mb-3">
+                    <el-icon class="text-slate-500"><MagicStick /></el-icon>
+                    <span class="font-medium">LLM检测参数</span>
+                  </div>
+                  <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2">
+                      <el-switch v-model="engine.promptInjection" active-text="提示词注入检测"></el-switch>
+                      <el-tooltip effect="dark" content="检测邮件是否包含提示词注入特征" placement="top">
+                        <el-icon><QuestionFilled /></el-icon>
+                      </el-tooltip>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <el-switch v-model="engine.genContentDetect" active-text="AI生成内容识别"></el-switch>
+                      <el-tooltip effect="dark" content="识别文本是否为AI生成" placement="top">
+                        <el-icon><QuestionFilled /></el-icon>
+                      </el-tooltip>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-card>
+        </div>
+
+        <div class="col-span-12 xl:col-span-6">
+          <el-card shadow="always" class="rounded-xl">
+            <template #header>
+              <div class="flex items-center gap-2">
+                <el-icon class="text-brand"><TrendCharts /></el-icon>
+                <span>风险阈值管理</span>
+              </div>
+            </template>
+            <div class="space-y-4">
+              <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/60 p-4">
+                <div class="font-medium mb-3">评分权重配置</div>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-3">
+                    <span class="w-28 text-sm">关键词命中</span>
+                    <el-slider v-model="weights.keyword" :min="0" :max="100" :step="1" style="flex:1;"></el-slider>
+                    <span class="w-16 text-right">{{ weights.keyword }}%</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="w-28 text-sm">LLM判定</span>
+                    <el-slider v-model="weights.llm" :min="0" :max="100" :step="1" style="flex:1;"></el-slider>
+                    <span class="w-16 text-right">{{ weights.llm }}%</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="w-28 text-sm">社工评分</span>
+                    <el-slider v-model="weights.social" :min="0" :max="100" :step="1" style="flex:1;"></el-slider>
+                    <span class="w-16 text-right">{{ weights.social }}%</span>
+                  </div>
+                </div>
+                <div class="mt-2 text-sm text-slate-500">总和：{{ totalWeight }}%（自动保持100%）</div>
+                <div class="mt-1 text-sm">公式：总分 = 关键词×{{ weights.keyword }}% + LLM×{{ weights.llm }}% + 社工×{{ weights.social }}%</div>
+              </div>
+
+              <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/60 p-4">
+                <div class="font-medium mb-3">警报阈值设置</div>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-3">
+                    <span class="w-24">Critical</span>
+                    <el-slider v-model="thresholds.critical" :min="0" :max="100" :step="1" style="flex:1;"></el-slider>
+                    <el-tag type="danger">{{ thresholds.critical }}+</el-tag>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="w-24">High</span>
+                    <el-slider v-model="thresholds.high" :min="0" :max="100" :step="1" style="flex:1;"></el-slider>
+                    <el-tag type="warning">{{ thresholds.high }}+</el-tag>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="w-24">Medium</span>
+                    <el-slider v-model="thresholds.medium" :min="0" :max="100" :step="1" style="flex:1;"></el-slider>
+                    <el-tag type="info">{{ thresholds.medium }}+</el-tag>
+                  </div>
+                </div>
+                <div class="mt-2 text-sm">逻辑顺序：Medium ≤ High ≤ Critical</div>
+              </div>
+
+              <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/60 p-4">
+                <div class="font-medium mb-3">社工评分标准</div>
+                <div class="grid grid-cols-12 gap-3">
+                  <div class="col-span-12 lg:col-span-4 flex items-center gap-2">
+                    <el-checkbox v-model="seOptions.urgency">紧迫感检测</el-checkbox>
+                    <el-button text @click="explain('紧迫感检测','识别文本是否制造紧迫氛围，诱导快速决策')">说明</el-button>
+                  </div>
+                  <div class="col-span-12 lg:col-span-4 flex items-center gap-2">
+                    <el-checkbox v-model="seOptions.clickbait">诱导点击检测</el-checkbox>
+                    <el-button text @click="explain('诱导点击检测','识别异常链接、按钮或过度承诺引导点击')">说明</el-button>
+                  </div>
+                  <div class="col-span-12 lg:col-span-4 flex items-center gap-2">
+                    <el-checkbox v-model="seOptions.phishing">钓鱼意图检测</el-checkbox>
+                    <el-button text @click="explain('钓鱼意图检测','识别仿冒品牌、收集凭据或转账的行为暗示')">说明</el-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-card>
+        </div>
+      </div>
+
+      <div class="sticky-actions">
+        <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-end gap-3 rounded-t-xl">
+          <el-button @click="resetAll">取消</el-button>
+          <el-button type="primary" @click="saveAll" :loading="saving">保存</el-button>
+        </div>
+      </div>
+    </main>
+
+    <el-dialog v-model="help.visible" title="功能说明" width="50%">
+      <div class="space-y-3 text-sm">
+        <div>检测引擎：选择AI模型与温度，管理黑白名单与正则规则，支持导入导出。</div>
+        <div>LLM检测参数：开启提示词注入与AI生成识别，用于强化检测能力。</div>
+        <div>风险阈值：权重总和保持100%，警报阈值保证顺序，实时显示公式与数值。</div>
+        <div>社工评分：紧迫感、诱导点击、钓鱼意图三项默认开启，可查看说明。</div>
+        <div>保存：进行数据有效性校验，校验通过后持久化到浏览器。</div>
+      </div>
+    </el-dialog>
+  </div>
+
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.js"></script>
+  <script>
+    const { createApp, ref, reactive, computed, watch, onMounted } = Vue
+    const app = createApp({
+      setup() {
+        const darkMode = ref(false)
+        const help = reactive({ visible: false })
+        const engine = reactive({ model: 'gpt4', temperature: 0.7, promptInjection: true, genContentDetect: true })
+        const modelDescMap = {
+          gpt4: '通用强模型，适合复杂语义理解与安全检测',
+          claude3: '稳定可靠的长文本模型，适合审阅与总结',
+          llama: '本地部署模型，隐私可控，需优化提示词',
+          bert: '经典NLP模型，适合关键词与分类任务'
+        }
+        const listTab = ref('black')
+        const black = reactive({ items: [], newType: 'keyword', newValue: '' })
+        const white = reactive({ items: [], newType: 'keyword', newValue: '' })
+        const regex = reactive({ pattern: '', flags: '', error: true, testText: '', matches: [] })
+        const cm = ref(null)
+        const weights = reactive({ keyword: 40, llm: 40, social: 20 })
+        const thresholds = reactive({ critical: 90, high: 70, medium: 40 })
+        const seOptions = reactive({ urgency: true, clickbait: true, phishing: true })
+        const saving = ref(false)
+
+        const modelDesc = computed(() => modelDescMap[engine.model] || '')
+        const totalWeight = computed(() => weights.keyword + weights.llm + weights.social)
+
+        const openHelp = () => { help.visible = true }
+
+        const addItem = (which) => {
+          const target = which === 'black' ? black : white
+          const v = (target.newValue || '').trim()
+          if (!v) { ElementPlus.ElMessage.error('请输入值'); return }
+          target.items.push({ type: target.newType || 'keyword', value: v })
+          target.newValue = ''
+        }
+        const removeItem = (which, idx) => {
+          const target = which === 'black' ? black : white
+          target.items.splice(idx, 1)
+        }
+
+        const compileRegex = () => {
+          try {
+            const f = (regex.flags || '').replace(/[^gimsuy]/g,'')
+            new RegExp(regex.pattern || '', f)
+            regex.error = false
+          } catch {
+            regex.error = true
+          }
+        }
+        const runRegexTest = () => {
+          regex.matches = []
+          if (regex.error) { ElementPlus.ElMessage.error('正则无效'); return }
+          try {
+            const re = new RegExp(regex.pattern || '', regex.flags || '')
+            const text = regex.testText || ''
+            const arr = []
+            let m
+            if (re.global) {
+              while ((m = re.exec(text)) !== null) arr.push(m[0])
+            } else {
+              m = text.match(re)
+              if (m) arr.push(m[0])
+            }
+            regex.matches = arr
+          } catch {
+            ElementPlus.ElMessage.error('测试失败')
+          }
+        }
+
+        const editorInit = () => {
+          cm.value = CodeMirror(document.getElementById('regexEditor'), { value: '', mode: 'javascript', theme: 'material-palenight', lineNumbers: false })
+          cm.value.on('change', () => { regex.pattern = cm.value.getValue(); compileRegex() })
+        }
+
+        const clampWeights = () => {
+          let k = weights.keyword, l = weights.llm, s = weights.social
+          let sum = k + l + s
+          if (sum === 100) return
+          if (sum <= 0) { weights.keyword = 34; weights.llm = 33; weights.social = 33; return }
+          k = Math.max(0, k); l = Math.max(0, l); s = Math.max(0, s)
+          sum = k + l + s
+          weights.keyword = Math.round(k * 100 / sum)
+          weights.llm = Math.round(l * 100 / sum)
+          weights.social = 100 - weights.keyword - weights.llm
+        }
+        watch(() => ({...weights}), clampWeights, { deep: true })
+
+        const clampThresholds = () => {
+          thresholds.medium = Math.min(thresholds.medium, thresholds.high)
+          thresholds.high = Math.max(thresholds.medium, thresholds.high)
+          thresholds.critical = Math.max(thresholds.high, thresholds.critical)
+        }
+        watch(() => ({...thresholds}), clampThresholds, { deep: true })
+
+        const exportRules = async () => {
+          const data = { blacklist: black.items, whitelist: white.items, regex: { pattern: regex.pattern, flags: regex.flags } }
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+          const a = document.createElement('a')
+          a.href = URL.createObjectURL(blob)
+          a.download = 'rules.json'
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+        }
+        const importRules = async (file) => {
+          try {
+            const text = await file.raw.text()
+            const obj = JSON.parse(text)
+            black.items = Array.isArray(obj.blacklist) ? obj.blacklist : []
+            white.items = Array.isArray(obj.whitelist) ? obj.whitelist : []
+            regex.pattern = (obj.regex && obj.regex.pattern) || ''
+            regex.flags = (obj.regex && obj.regex.flags) || ''
+            if (cm.value) cm.value.setValue(regex.pattern)
+            compileRegex()
+            ElementPlus.ElMessage.success('导入成功')
+          } catch {
+            ElementPlus.ElMessage.error('导入失败')
+          }
+        }
+
+        const validateAll = () => {
+          if (totalWeight.value !== 100) { ElementPlus.ElMessage.error('权重总和需为100'); return false }
+          if (thresholds.medium > thresholds.high || thresholds.high > thresholds.critical) { ElementPlus.ElMessage.error('阈值需满足 Medium ≤ High ≤ Critical'); return false }
+          if (regex.error === true && regex.pattern) { ElementPlus.ElMessage.error('正则表达式无效'); return false }
+          return true
+        }
+        const saveAll = async () => {
+          if (!validateAll()) return
+          saving.value = true
+          try {
+            const payload = { engine, lists: { blacklist: black.items, whitelist: white.items }, regex: { pattern: regex.pattern, flags: regex.flags }, weights, thresholds, seOptions }
+            localStorage.setItem('settings', JSON.stringify(payload))
+            ElementPlus.ElMessage.success('已保存')
+          } catch {
+            ElementPlus.ElMessage.error('保存失败')
+          } finally {
+            saving.value = false
+          }
+        }
+        const resetAll = () => {
+          engine.model = 'gpt4'; engine.temperature = 0.7; engine.promptInjection = true; engine.genContentDetect = true
+          black.items = []; white.items = []; black.newType = 'keyword'; white.newType = 'keyword'; black.newValue = ''; white.newValue = ''
+          regex.pattern = ''; regex.flags = ''; regex.error = true; regex.testText = ''; regex.matches = []; if (cm.value) cm.value.setValue('')
+          weights.keyword = 40; weights.llm = 40; weights.social = 20
+          thresholds.critical = 90; thresholds.high = 70; thresholds.medium = 40
+          seOptions.urgency = true; seOptions.clickbait = true; seOptions.phishing = true
+          ElementPlus.ElMessage.info('已重置')
+        }
+
+        const initDark = () => { const saved = localStorage.getItem('dark') === '1'; darkMode.value = saved; document.documentElement.classList.toggle('dark', darkMode.value) }
+        watch(darkMode, (v) => { document.documentElement.classList.toggle('dark', v); localStorage.setItem('dark', v ? '1' : '0') })
+
+        onMounted(() => { editorInit(); initDark() })
+
+        const explain = (title, text) => { ElementPlus.ElMessageBox.alert(text, title, { confirmButtonText: '确定' }) }
+
+        return { darkMode, help, openHelp, engine, modelDesc, listTab, black, white, addItem, removeItem, regex, compileRegex, runRegexTest, exportRules, importRules, weights, totalWeight, thresholds, seOptions, saving, saveAll, resetAll, explain }
+      }
+    })
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) { app.component(key, component) }
+    app.use(ElementPlus).mount('#app')
+  </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>检测报告</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --el-card-border-radius: 14px; }
+    html.dark { --el-card-border-color: #1f2937; }
+  </style>
+</head>
+<body>
+  <div id="app" class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <header class="sticky top-0 z-30 h-14 px-6 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+      <div class="flex items-center gap-3">
+        <el-icon class="text-brand"><Document /></el-icon>
+        <span class="font-semibold">检测报告</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="./index.html" class="text-sm text-brand">返回 Dashboard</a>
+        <div class="flex items-center gap-2">
+          <el-icon class="text-yellow-500"><Sunny /></el-icon>
+          <el-switch v-model="darkMode" active-text="暗色" inactive-text="浅色"></el-switch>
+          <el-icon class="text-sky-500"><Moon /></el-icon>
+        </div>
+      </div>
+    </header>
+
+    <main class="p-6">
+      <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-12 xl:col-span-8">
+          <el-card shadow="always" class="rounded-xl">
+            <template #header>
+              <div class="flex items-center gap-2">
+                <el-icon class="text-brand"><Search /></el-icon>
+                <span>报告查询与概览</span>
+              </div>
+            </template>
+            <div class="space-y-4">
+              <div class="flex flex-wrap items-center gap-3">
+                <el-input v-model="queryId" placeholder="输入报告ID" style="width:280px;"></el-input>
+                <el-button type="primary" @click="queryReport">查询</el-button>
+                <el-button @click="loadHistory">加载本地历史</el-button>
+                <span class="text-sm text-slate-500">历史条目：{{ historyIds.length }}</span>
+              </div>
+              <el-table :data="reports" v-if="reports.length">
+                <el-table-column prop="filename" label="文件"></el-table-column>
+                <el-table-column prop="risk" label="风险分"></el-table-column>
+                <el-table-column prop="confidence" label="置信度"></el-table-column>
+                <el-table-column prop="level" label="等级"></el-table-column>
+                <el-table-column label="详情" width="120">
+                  <template #default="{row}">
+                    <el-button size="small" @click="viewReport(row.id)">查看</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <div v-else class="text-slate-500">暂无数据</div>
+            </div>
+          </el-card>
+        </div>
+
+        <div class="col-span-12 xl:col-span-4">
+          <el-card shadow="always" class="rounded-xl">
+            <template #header>
+              <div class="flex items-center gap-2">
+                <el-icon class="text-brand"><DataAnalysis /></el-icon>
+                <span>统计概览</span>
+              </div>
+            </template>
+            <div class="space-y-3">
+              <div class="grid grid-cols-12 gap-3">
+                <div class="col-span-12 md:col-span-6">
+                  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/60 p-3">
+                    <div class="text-xs text-slate-500">总量</div>
+                    <div class="text-xl font-semibold">{{ stats.total }}</div>
+                  </div>
+                </div>
+                <div class="col-span-12 md:col-span-6">
+                  <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/60 p-3">
+                    <div class="text-xs text-slate-500">平均风险</div>
+                    <div class="text-xl font-semibold">{{ stats.avg.risk }}</div>
+                  </div>
+                </div>
+              </div>
+              <div id="dailyChart" class="h-[220px]"></div>
+            </div>
+          </el-card>
+        </div>
+      </div>
+
+      <el-dialog v-model="dialog.visible" title="报告详情" width="60%">
+        <div v-if="dialog.report">
+          <div class="flex gap-4 items-center">
+            <div id="gaugeChart" style="width:280px; height:180px;"></div>
+            <div>
+              <div class="mb-2">
+                <el-tag :type="levelTag(dialog.report.level)">{{ dialog.report.level }}</el-tag>
+                <span class="ml-2">评分：{{ (dialog.report.risk/10).toFixed(1) }}/10</span>
+              </div>
+              <el-rate v-model="rateValue" disabled show-score :max="10"></el-rate>
+            </div>
+          </div>
+          <el-card class="mt-3" shadow="always">
+            <template #header><div>详细分析</div></template>
+            <div class="grid grid-cols-12 gap-4">
+              <div class="col-span-12 md:col-span-6">
+                <h4 class="font-medium">威胁类型分布</h4>
+                <div id="typeChart" class="h-[220px]"></div>
+              </div>
+              <div class="col-span-12 md:col-span-6">
+                <h4 class="font-medium">攻击链时间轴</h4>
+                <div id="chainChart" class="h-[220px]"></div>
+              </div>
+            </div>
+          </el-card>
+          <div class="mt-3 flex items-center gap-3">
+            <el-select v-model="exportFormat" placeholder="选择导出格式" style="width:180px;">
+              <el-option label="PDF" value="pdf"></el-option>
+              <el-option label="JSON" value="json"></el-option>
+            </el-select>
+            <el-button type="success" :loading="exporting" @click="exportReport">导出</el-button>
+            <span class="text-xs text-slate-500">{{ exportStatus }}</span>
+          </div>
+        </div>
+      </el-dialog>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+  <script src="https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js"></script>
+  <script>
+    const { createApp, ref, reactive, watch } = Vue
+    const app = createApp({
+      setup() {
+        const darkMode = ref(false)
+        const stats = reactive({ total: 0, avg: {risk:0}, daily: [] })
+        const queryId = ref('')
+        const reports = ref([])
+        const dialog = reactive({ visible: false, report: null })
+        const rateValue = ref(0)
+        const exportFormat = ref('pdf')
+        const exporting = ref(false)
+        const exportStatus = ref('')
+        const historyIds = ref([])
+
+        const levelTag = (lv) => { const m = { '危急':'danger', '高':'warning', '中':'info', '低':'success' }; return m[lv] || '' }
+
+        const queryReport = async () => {
+          const id = (queryId.value||'').trim()
+          if (!id) { ElementPlus.ElMessage.error('请输入报告ID'); return }
+          try { const r = await fetch('/api/reports/' + id); const d = await r.json(); reports.value = [d] } catch { ElementPlus.ElMessage.error('查询失败') }
+        }
+        const loadHistory = async () => {
+          try { historyIds.value = JSON.parse(localStorage.getItem('history_report_ids')||'[]') || [] } catch { historyIds.value = [] }
+          const list = []
+          for (const id of historyIds.value.slice(-50)) {
+            try { const r = await fetch('/api/reports/' + id); const d = await r.json(); list.push(d) } catch {}
+          }
+          reports.value = list
+        }
+        const viewReport = async (id) => {
+          const r = await fetch('/api/reports/' + id)
+          dialog.report = await r.json()
+          dialog.visible = true
+          rateValue.value = Math.round((dialog.report.risk/10) * 10) / 10
+          await renderDetailCharts()
+        }
+        const exportReport = async () => {
+          if (!dialog.report) return
+          exporting.value = true
+          exportStatus.value = '正在导出...'
+          try {
+            const fmt = exportFormat.value || 'pdf'
+            const url = `/api/v1/report/export?id=${encodeURIComponent(dialog.report.id)}&format=${encodeURIComponent(fmt)}`
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), 20000)
+            const res = await fetch(url, { signal: controller.signal })
+            clearTimeout(timer)
+            if (!res.ok) throw new Error('导出失败')
+            const blob = await res.blob()
+            const a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.download = `report_${dialog.report.id}.${fmt}`
+            document.body.appendChild(a)
+            a.click()
+            a.remove()
+            exportStatus.value = '导出完成'
+          } catch (e) {
+            exportStatus.value = '导出失败'
+          } finally {
+            exporting.value = false
+          }
+        }
+
+        const ensureEcharts = () => new Promise((resolve, reject) => { if (window.echarts) { resolve(); return } const s = document.createElement('script'); s.src='https://cdn.staticfile.org/echarts/5.5.0/echarts.min.js'; s.onload=()=>resolve(); s.onerror=()=>reject(); document.head.appendChild(s) })
+        const renderStats = async () => {
+          await ensureEcharts()
+          try { const r = await fetch('/api/stats'); const d = await r.json(); Object.assign(stats, d) } catch {}
+          const dailyEl = document.getElementById('dailyChart')
+          if (!dailyEl) return
+          const dailyChart = echarts.init(dailyEl)
+          dailyChart.setOption({ color:['#2563EB'], tooltip:{}, xAxis:{ type:'category', data:(stats.daily||[]).map(x=>x.date) }, yAxis:{ type:'value' }, series:[{ type:'line', data:(stats.daily||[]).map(x=>x.count), smooth:true }] })
+        }
+        const renderDetailCharts = async () => {
+          await ensureEcharts()
+          const typeEl = document.getElementById('typeChart')
+          const chainEl = document.getElementById('chainChart')
+          if (!typeEl || !chainEl || !dialog.report) return
+          const typeChart = echarts.init(typeEl)
+          const chainChart = echarts.init(chainEl)
+          const types = {}; for (const t of (dialog.report.threats||[])) types[t.name] = (types[t.name]||0)+1
+          typeChart.setOption({ tooltip:{}, series:[{ type:'pie', radius:['50%','70%'], label:{ show:false }, data:Object.keys(types).map(k=>({name:k,value:types[k]})) }] })
+          const chain = dialog.report.chain || []
+          const nodes = chain.map((name, i) => ({ name, x: 40 + i*140, y: 100 }))
+          const edges = chain.slice(0,-1).map((_, i) => ({ source:i, target:i+1 }))
+          chainChart.setOption({ tooltip:{}, series:[{ type:'graph', layout:'none', data:nodes, edges:edges, roam:false, label:{ show:true } }] })
+        }
+
+        const initDark = () => { const saved = localStorage.getItem('dark') === '1'; darkMode.value = saved; document.documentElement.classList.toggle('dark', darkMode.value) }
+        watch(darkMode, (v) => { document.documentElement.classList.toggle('dark', v); localStorage.setItem('dark', v ? '1' : '0') })
+        initDark(); renderStats(); loadHistory()
+
+        return { darkMode, stats, queryId, reports, dialog, rateValue, levelTag, exportFormat, exporting, exportStatus, queryReport, loadHistory, viewReport, exportReport }
+      }
+    })
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) { app.component(key, component) }
+    app.use(ElementPlus).mount('#app')
+  </script>
+</body>
+</html>

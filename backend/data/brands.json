@@ -1,0 +1,10 @@
+[
+  {"name": "PayPal", "domains": ["paypal.com"]},
+  {"name": "Apple", "domains": ["apple.com", "icloud.com"]},
+  {"name": "Microsoft", "domains": ["microsoft.com", "live.com", "office.com"]},
+  {"name": "Amazon", "domains": ["amazon.com", "aws.amazon.com"]},
+  {"name": "Alipay", "domains": ["alipay.com"]},
+  {"name": "WeChat", "domains": ["wechat.com", "qq.com"]},
+  {"name": "招商银行", "domains": ["cmbchina.com"]},
+  {"name": "工商银行", "domains": ["icbc.com.cn"]}
+]
