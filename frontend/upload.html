@@ -7,29 +7,60 @@
   <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
   <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     :root { --el-card-border-radius: 14px; }
     html.dark { --el-card-border-color: #1f2937; }
+    * { transition: background-color .25s ease, color .25s ease, border-color .25s ease }
+    .sidebar { position: fixed; left: 0; top: 0; height: 100vh; width: 220px; max-width: 240px; background: #f8f9fa; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 16px 12px; z-index: 40 }
+    .sidebar .brand { display: flex; align-items: center; gap: 8px; padding: 8px 4px; font-weight: 600 }
+    .nav { margin-top: 12px; display: flex; flex-direction: column; gap: 4px }
+    .nav a { display: flex; align-items: center; gap: 8px; height: 40px; border-radius: 8px; padding: 0 10px; color: #334155; text-decoration: none; transition: background-color .2s ease, color .2s ease }
+    .nav a .nav-icon { width: 24px; height: 24px; font-size: 24px }
+    .nav a:hover { background: #eef2f7; color: #0f172a }
+    .nav a.active { background: #e2e8f0; color: #0f172a; font-weight: 600 }
+    .main-with-sidebar { margin-left: 220px }
+    .header-with-sidebar { margin-left: 220px }
+    @media (max-width: 768px) {
+      .sidebar { width: 64px; padding: 12px 8px }
+      .sidebar .brand .label { display: none }
+      .nav a .label { display: none }
+      .main-with-sidebar { margin-left: 64px }
+      .header-with-sidebar { margin-left: 64px }
+    }
+    .dark .sidebar { background:#0f172a; border-right-color:#1f2937 }
+    .dark .nav a { color:#cbd5e1 }
+    .dark .nav a:hover { background:#1f2937; color:#e5e7eb }
+    .dark .nav a.active { background:#1f2937; color:#ffffff }
   </style>
 </head>
 <body>
   <div id="app" class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-    <header class="sticky top-0 z-30 h-14 px-6 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-      <div class="flex items-center gap-3">
-        <el-icon class="text-brand"><Upload /></el-icon>
-        <span class="font-semibold">上传检测</span>
+    <aside class="sidebar">
+      <div class="brand">
+        <i class="fa-solid fa-upload nav-icon"></i>
+        <span class="label">上传检测</span>
       </div>
-      <div class="flex items-center gap-3">
-        <a href="./index.html" class="text-sm text-brand">返回 Dashboard</a>
-        <div class="flex items-center gap-2">
-          <el-icon class="text-yellow-500"><Sunny /></el-icon>
-          <el-switch v-model="darkMode" active-text="暗色" inactive-text="浅色"></el-switch>
-          <el-icon class="text-sky-500"><Moon /></el-icon>
-        </div>
+      <nav class="nav">
+        <a href="/index.html"><i class="fa-solid fa-chart-line nav-icon"></i><span class="label">Dashboard</span></a>
+        <a href="/upload.html"><i class="fa-solid fa-upload nav-icon"></i><span class="label">上传检测</span></a>
+        <a href="/reports.html"><i class="fa-solid fa-file-lines nav-icon"></i><span class="label">检测报告</span></a>
+        <a href="/settings.html"><i class="fa-solid fa-gear nav-icon"></i><span class="label">设置</span></a>
+      </nav>
+    </aside>
+    <header class="sticky top-0 z-30 h-14 px-6 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 header-with-sidebar">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span class="font-semibold">邮件检测系统</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <el-icon class="text-yellow-500"><Sunny /></el-icon>
+        <el-switch v-model="darkMode" active-text="暗色" inactive-text="浅色"></el-switch>
+        <el-icon class="text-sky-500"><Moon /></el-icon>
       </div>
     </header>
 
-    <main class="p-6">
+    <main class="p-6 main-with-sidebar">
       <div class="max-w-5xl mx-auto">
         <el-card shadow="always" class="rounded-xl">
           <template #header>
@@ -54,7 +85,6 @@
               </div>
               <div class="px-3 pb-3 flex flex-wrap items-center gap-3">
                 <el-select v-model="model" placeholder="选择模型" style="width:220px;">
-                  <el-option label="GPT-4" value="gpt4"></el-option>
                   <el-option label="Gemini 2.5 Flash" value="gemini"></el-option>
                   <el-option label="GLM 4.6" value="glm46"></el-option>
                   <el-option label="自定义(OpenAI兼容)" value="openai"></el-option>
@@ -107,7 +137,7 @@
         const error = ref('')
         const successMsg = ref('')
         const textInput = ref('')
-        const model = ref('gpt4')
+        const model = ref('gemini')
         const customEnabled = ref(false)
         const customModel = ref('')
         const customKey = ref('')
@@ -151,6 +181,10 @@
             const blob = new Blob([textInput.value], { type: 'text/plain' })
             form.append('files', blob, 'input.txt')
           }
+          if (model.value === 'openai' && !customEnabled.value) {
+            error.value = '请选择“自定义(OpenAI兼容)”并启用自定义配置以使用 OpenAI 提供方'
+            return
+          }
           uploading.value = true
           progress.total = fileList.value.length + ((textInput.value||'').trim()?1:0)
           progress.done = 0
@@ -173,6 +207,19 @@
               localStorage.setItem(key, JSON.stringify(next))
             } catch {}
             successMsg.value = '已提交检测，可前往“检测报告”查看结果'
+            try {
+              const rid = (ids||[])[0]
+              if (rid) {
+                ElementPlus.ElNotification({
+                  title: '分析成功',
+                  message: `<a href="/reports.html?id=${encodeURIComponent(rid)}" style="color:#2563EB;text-decoration:underline">查看报告</a>`,
+                  dangerouslyUseHTMLString: true,
+                  duration: 5000
+                })
+              } else {
+                ElementPlus.ElNotification({ title: '分析成功', message: '已生成报告', duration: 3000 })
+              }
+            } catch {}
           } catch (e) {
             error.value = e.message
           } finally {
@@ -189,6 +236,7 @@
     })
     for (const [key, component] of Object.entries(ElementPlusIconsVue)) { app.component(key, component) }
     app.use(ElementPlus).mount('#app')
+    ;(function(){ const links = document.querySelectorAll('.sidebar .nav a'); let p = location.pathname.split('/').pop() || 'index.html'; if (!p.endsWith('.html')) p = p + '.html'; links.forEach(a=>{ const href = a.getAttribute('href'); if (href && href.endsWith(p)) a.classList.add('active') }) })()
   </script>
 </body>
 </html>

@@ -9,21 +9,54 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-palenight.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     :root { --el-card-border-radius: 14px; }
     html.dark { --el-card-border-color: #1f2937; }
     .sticky-actions { position: sticky; bottom: 0; z-index: 40; }
+    * { transition: background-color .25s ease, color .25s ease, border-color .25s ease }
+    .sidebar { position: fixed; left: 0; top: 0; height: 100vh; width: 220px; max-width: 240px; background: #f8f9fa; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 16px 12px; z-index: 40 }
+    .sidebar .brand { display: flex; align-items: center; gap: 8px; padding: 8px 4px; font-weight: 600 }
+    .nav { margin-top: 12px; display: flex; flex-direction: column; gap: 4px }
+    .nav a { display: flex; align-items: center; gap: 8px; height: 40px; border-radius: 8px; padding: 0 10px; color: #334155; text-decoration: none; transition: background-color .2s ease, color .2s ease }
+    .nav a .nav-icon { width: 24px; height: 24px; font-size: 24px }
+    .nav a:hover { background: #eef2f7; color: #0f172a }
+    .nav a.active { background: #e2e8f0; color: #0f172a; font-weight: 600 }
+    .main-with-sidebar { margin-left: 220px }
+    .header-with-sidebar { margin-left: 220px }
+    @media (max-width: 768px) {
+      .sidebar { width: 64px; padding: 12px 8px }
+      .sidebar .brand .label { display: none }
+      .nav a .label { display: none }
+      .main-with-sidebar { margin-left: 64px }
+      .header-with-sidebar { margin-left: 64px }
+    }
+    .dark .sidebar { background:#0f172a; border-right-color:#1f2937 }
+    .dark .nav a { color:#cbd5e1 }
+    .dark .nav a:hover { background:#1f2937; color:#e5e7eb }
+    .dark .nav a.active { background:#1f2937; color:#ffffff }
   </style>
 </head>
 <body>
   <div id="app" class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-    <header class="sticky top-0 z-30 h-14 px-6 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-      <div class="flex items-center gap-3">
-        <el-icon class="text-brand"><Setting /></el-icon>
-        <span class="font-semibold">设置中心</span>
+    <aside class="sidebar">
+      <div class="brand">
+        <i class="fa-solid fa-gear nav-icon"></i>
+        <span class="label">设置中心</span>
+      </div>
+      <nav class="nav">
+        <a href="/index.html"><i class="fa-solid fa-chart-line nav-icon"></i><span class="label">Dashboard</span></a>
+        <a href="/upload.html"><i class="fa-solid fa-upload nav-icon"></i><span class="label">上传检测</span></a>
+        <a href="/reports.html"><i class="fa-solid fa-file-lines nav-icon"></i><span class="label">检测报告</span></a>
+        <a href="/settings.html"><i class="fa-solid fa-gear nav-icon"></i><span class="label">设置</span></a>
+      </nav>
+    </aside>
+    <header class="sticky top-0 z-30 h-14 px-6 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 header-with-sidebar">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span class="font-semibold">邮件检测系统</span>
       </div>
       <div class="flex items-center gap-3">
-        <a href="./index.html" class="text-sm text-brand">返回 Dashboard</a>
         <el-button type="primary" @click="openHelp"><el-icon><QuestionFilled /></el-icon> 帮助</el-button>
         <div class="flex items-center gap-2">
           <el-icon class="text-yellow-500"><Sunny /></el-icon>
@@ -33,7 +66,7 @@
       </div>
     </header>
 
-    <main class="p-6 space-y-6">
+    <main class="p-6 space-y-6 main-with-sidebar">
       <div class="grid grid-cols-12 gap-6">
         <div class="col-span-12 xl:col-span-6">
           <el-card shadow="always" class="rounded-xl">
@@ -47,10 +80,9 @@
               <div class="col-span-12">
                 <div class="flex flex-wrap items-center gap-3">
                   <el-select v-model="engine.model" placeholder="选择模型" style="width:220px;">
-                    <el-option label="GPT-4" value="gpt4"></el-option>
-                    <el-option label="Claude-3" value="claude3"></el-option>
-                    <el-option label="本地LLaMA" value="llama"></el-option>
-                    <el-option label="BERT" value="bert"></el-option>
+                    <el-option label="Gemini 2.5 Flash" value="gemini"></el-option>
+                    <el-option label="GLM 4.6" value="glm46"></el-option>
+                    <el-option label="自定义(OpenAI兼容)" value="openai"></el-option>
                   </el-select>
                   <div class="flex items-center gap-3">
                     <span class="text-sm text-slate-500">温度</span>
@@ -281,13 +313,13 @@
       setup() {
         const darkMode = ref(false)
         const help = reactive({ visible: false })
-        const engine = reactive({ model: 'gpt4', temperature: 0.7, promptInjection: true, genContentDetect: true })
+        const engine = reactive({ model: 'gemini', temperature: 0.4, promptInjection: true, genContentDetect: true })
         const modelDescMap = {
-          gpt4: '通用强模型，适合复杂语义理解与安全检测',
-          claude3: '稳定可靠的长文本模型，适合审阅与总结',
-          llama: '本地部署模型，隐私可控，需优化提示词',
-          bert: '经典NLP模型，适合关键词与分类任务'
+          gemini: 'Google Gemini：语义理解良好，适合综合检测',
+          glm46: '智谱 GLM-4.6：中文表现优秀，适合规则+LLM联合',
+          openai: 'OpenAI 兼容：需配置 API Key 与 Base URL'
         }
+        const defaultTemps = { gemini: 0.4, glm46: 0.3, openai: 0.7 }
         const listTab = ref('black')
         const black = reactive({ items: [], newType: 'keyword', newValue: '' })
         const white = reactive({ items: [], newType: 'keyword', newValue: '' })
@@ -300,6 +332,7 @@
 
         const modelDesc = computed(() => modelDescMap[engine.model] || '')
         const totalWeight = computed(() => weights.keyword + weights.llm + weights.social)
+        watch(() => engine.model, (m) => { engine.temperature = defaultTemps[m] ?? 0.5 })
 
         const openHelp = () => { help.visible = true }
 
@@ -436,6 +469,7 @@
     })
     for (const [key, component] of Object.entries(ElementPlusIconsVue)) { app.component(key, component) }
     app.use(ElementPlus).mount('#app')
+    ;(function(){ const links = document.querySelectorAll('.sidebar .nav a'); let p = location.pathname.split('/').pop() || 'index.html'; if (!p.endsWith('.html')) p = p + '.html'; links.forEach(a=>{ const href = a.getAttribute('href'); if (href && href.endsWith(p)) a.classList.add('active') }) })()
   </script>
 </body>
 </html>
